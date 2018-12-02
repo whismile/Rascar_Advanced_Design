@@ -28,44 +28,42 @@ class Tracking(object):
     def tracking(self):
         self.direction.turn_straight()
 
-        while True:
-            currentStat = ""
-            for x in self.line.read_digital():
-                currentStat += str(x)
 
-            if currentStat == lineStat.leftDegree_35:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_left()
-            elif currentStat == lineStat.leftDegree_30:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_left(5)
-            elif currentStat == lineStat.leftDegree_10:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_left(20)
-            elif currentStat == lineStat.leftDegree_5:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_left(30)
+        currentStat = ""
+        for x in self.line.read_digital():
+            currentStat += str(x)
 
-            elif currentStat == lineStat.rightDegree_35:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_right()
-            elif currentStat == lineStat.rightDegree_30:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_right(-5)
-            elif currentStat == lineStat.rightDegree_10:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_right(-25)
-            elif currentStat == lineStat.rightDegree_5:
-                self.drive.forward_with_speed(80)
-                self.direction.turn_right(-30)
+        if currentStat == lineStat.leftDegree_35:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_left()
+        elif currentStat == lineStat.leftDegree_30:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_left(5)
+        elif currentStat == lineStat.leftDegree_10:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_left(20)
+        elif currentStat == lineStat.leftDegree_5:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_left(30)
+        elif currentStat == lineStat.rightDegree_35:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_right()
 
-            elif currentStat == lineStat.back:
-                self.direction.turn_right(-5)
-                self.drive.backward_with_speed(100)
-            elif currentStat == lineStat.stop:
-                self.drive.stop()
-                break
-            else:
-                self.drive.forward_with_speed(80)
+        elif currentStat == lineStat.rightDegree_30:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_right(-5)
+        elif currentStat == lineStat.rightDegree_10:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_right(-25)
+        elif currentStat == lineStat.rightDegree_5:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_right(-30)
+        elif currentStat == lineStat.back:
+            self.direction.turn_right(-5)
+            self.drive.backward_with_speed(100)
 
-                self.direction.turn_straight()
+        elif currentStat == lineStat.stop:
+            self.drive.stop()
+        else:
+            self.drive.forward_with_speed(80)
+            self.direction.turn_straight()
