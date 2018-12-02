@@ -1,6 +1,7 @@
 from PCA9685 import Servo
 from time import sleep
 
+
 class Batting_Servo(object):
     channel = 1
 

@@ -4,13 +4,15 @@ from time import sleep
 
 class Colour_Detector(object):
     def __init__(self):
+        # Inheritance from Library
         self.colour_detector = TCS34725_RGB.TCS34725()
 
-        self.red_range = [[100, 255], [0, 155], [0, 155]]
+        self.red_range = [[100, 255], [0, 155], [0, 155]]   # Range of Colours
         self.green_range = [[0, 155], [100, 255], [0, 155]]
         self.blue_range = [[0, 155], [0, 155], [100, 255]]
-        self.yellow_range = [[100, 255], [100, 255], [0, 200]]
+        self.yellow_range = [[100, 255], [100, 255], [0, 155]]
 
+    # Comparing Conditions and Return Boolean
     def is_red(self):
         return self.get_red() > self.get_green() + 50 and self.get_red() > self.get_blue() + 50 \
                and self.red_range[0][0] <= self.get_red() <= self.red_range[0][1] \
@@ -35,6 +37,7 @@ class Colour_Detector(object):
                and self.blue_range[1][0] <= self.get_green() <= self.blue_range[1][1] \
                and self.blue_range[2][0] <= self.get_blue() <= self.blue_range[2][1]
 
+    # Mapping Sensing Values whit Range of (0, 1024) to (0, 254) And Return Integer value
     def get_red(self):
         return int((255 / 1024) * self.colour_detector.get_raw_data()[0])
 
@@ -54,7 +57,6 @@ if __name__ == "__main__":
     try:
         while True:
             print("[", cd.get_red(), cd.get_green(), cd.get_blue(), "]")
-
             
             if cd.is_yellow:
                 print("yellow")
