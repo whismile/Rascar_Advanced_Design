@@ -58,15 +58,14 @@ if __name__ == "__main__":
         while True:
             print("[", cd.get_red(), cd.get_green(), cd.get_blue(), "]")
             
-            if cd.is_yellow:
-                print("yellow")
-
             if cd.is_red():
                 print('red')
             elif cd.is_blue():
                 print('blue')
             elif cd.is_green():
                 print('green')
+            elif cd.is_yellow():
+                print("yellow")
             else:
                 print('None')
 
