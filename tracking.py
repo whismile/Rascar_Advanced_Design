@@ -28,8 +28,8 @@ class Tracking(object):
     def tracking(self):
         self.direction.turn_straight()
 
-        currentStat = ""
         while True:
+            currentStat = ""
             for x in self.line.read_digital():
                 currentStat += str(x)
 
