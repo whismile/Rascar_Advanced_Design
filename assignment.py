@@ -30,7 +30,7 @@ import line_status as lineStat
 # =======================================================================
 GPIO.setwarnings(False)
 
-
+from batting_servo import Bat
 class Car(object):
 
     def __init__(self):
@@ -89,9 +89,19 @@ class Car(object):
 
                 self.direction.turn_straight()
 
-                if self.distance.get_distance() < 30:
-                    # Sensing And Action
-                    pass
+                if self.distance.get_distance() < self.interval:
+                    # Alert obstacle
+                    buzzer = GPIO.PWM(buzzer_pin, 100)
+                    p.start(5)
+                    sleep(0.5)
+                    p.stop()
+
+                    # stop
+                    self.drive.stop()
+
+                    # stroke & ready
+                    self.bat.batting()
+                    self.bat.ready()
 
     def moduleInitialize(self):
         try:
@@ -126,6 +136,21 @@ class Car(object):
             # SET FRONT WHEEL CENTOR ALLIGNMENT
             # ================================================================
             self.direction.turn_straight()
+
+            # ================================================================
+            # SET BUZZER
+            # ================================================================
+            buzzer_pin = 8
+
+            GPIO.setmode(GPIO.BOARD)
+            GPIO.setup(buzzer_pin, GPIO.OUT)
+
+            self.interval = 9
+
+            # ================================================================
+            # SET BAT
+            # ================================================================
+            self.bat = Bat()
 
         except:
             print("MODULE INITIALIZE ERROR")
