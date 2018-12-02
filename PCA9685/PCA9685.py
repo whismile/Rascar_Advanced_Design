@@ -1,6 +1,7 @@
 import smbus
 import time
 import math
+import os
 
 
 class PWM(object):
@@ -32,7 +33,7 @@ class PWM(object):
     RPI_REVISION_1_MODULE_BP = ["0010", "0013"]
     RPI_REVISION_1_MODULE_AP = ["0012"]
     RPI_REVISION_2_MODULE_B = ["a01041", "a21041"]
-    RPI_REVISION_3_MODULE_B = ["a02082", "a22082"]
+    RPI_REVISION_3_MODULE_B = ["a02082", "a22082", "a32082", "a52082"]
     RPI_REVISION_3_MODULE_BP = ["a020d3"]
 
     _DEBUG = False
@@ -56,6 +57,60 @@ class PWM(object):
             return 1
         elif pi_revision == '3 Module B+':
             return 1
+
+    def _get_pi_serial(self):
+        """Gets the serial number of the Raspberry Pi board"""
+        try:
+            prinfo = open('/proc/cpuinfo', 'r')
+            for line in prinfo:
+                if line.startswith('Serial'):
+                    return line[11:-1]
+        except Exception as e:
+            prinfo.close()
+            print(e)
+            print('Exiting...')
+            quit()
+        finally:
+            prinfo.close()
+
+    def _get_file_serial(self):
+        """Gets the serial number of the cpuinfo binary"""
+        try:
+            crinfo = open("./PCA9685/cpuinfo", 'r')
+            for line in crinfo:
+                return line
+        except Exception as e:
+            print(e)
+            print('Exiting...')
+            quit()
+        finally:
+            crinfo.close()
+
+    def _set_file_serial(self):
+        """Sets the serial number of the cpuinfo binary"""
+        try:
+            fser = open("./PCA9685/cpuinfo", 'w')
+            fser.write(self._get_pi_serial())
+        except Exception as e:
+            print(e)
+            print('Exiting...')
+            quit()
+        finally:
+            fser.close()
+
+    def _check_current_serial(self):
+        """Check the current serial number of the cpuinfo binary"""
+        if os.path.isfile("./PCA9685/cpuinfo"):
+            if not(self._get_pi_serial() in self._get_file_serial()):
+                print("MODULE INITIALIZE ERROR")
+                print("[ERROR-102] CONTACT TO Kookmin Univ. Teaching Assistant")
+                return False
+            else:
+                return True
+        else:
+            self._set_file_serial()
+            print("[INFORMATION] Restart Assignment_main Solution")
+            return False
 
     @property
     def _get_pi_revision(self):
@@ -96,12 +151,15 @@ class PWM(object):
             f.close()
 
     def __init__(self, bus_number=None, address=0x40):
-        self.address = address
-        if bus_number is None:
-            self.bus_number = self._get_bus_number()
+        if self._check_current_serial():
+            self.address = address
+            if bus_number is None:
+                self.bus_number = self._get_bus_number()
+            else:
+                self.bus_number = bus_number
+            self.bus = smbus.SMBus(self.bus_number)
         else:
-            self.bus_number = bus_number
-        self.bus = smbus.SMBus(self.bus_number)
+            quit()
 
     def setup(self):
         """Init the class with bus_number and address"""
@@ -116,16 +174,11 @@ class PWM(object):
         mode1 = mode1 & ~self._SLEEP
         self._write_byte_data(self._MODE1, mode1)
         time.sleep(0.005)
+
         self._frequency = 60
 
-    def write_reset(self):
-        """ Reset the PCA9685 module """ 
-        if self._DEBUG:
-            print(self._DEBUG_INFO, 'Resetting the PCA9685 module')
-        
-        self._write_byte_data(self.LEDALL_ON_L, 0x0)
-        self._write_byte_data(self.LEDALL_OFF_L, 0x1000)
-        time.sleep(0.005)
+    def startup(self):
+        self.setup()
 
     def _write_byte_data(self, reg, value):
         """Write data to I2C with self.address"""
@@ -188,11 +241,11 @@ class PWM(object):
             print("Device is missing.")
             print("Check the address or wiring of PCA9685 Server driver, "
                   "or email this information to support@sunfounder.com")
-        # raise IOError('IO error')
+        raise IOError('IO error')
 
     @property
     def frequency(self):
-        return _frequency
+        return self._frequency
 
     @frequency.setter
     def frequency(self, freq):
@@ -211,13 +264,17 @@ class PWM(object):
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Final pre-scale: %d' % prescale)
 
-        old_mode = self._read_byte_data(self._MODE1);
+        old_mode = self._read_byte_data(self._MODE1)
         new_mode = (old_mode & 0x7F) | 0x10
         self._write_byte_data(self._MODE1, new_mode)
         self._write_byte_data(self._PRESCALE, int(math.floor(prescale)))
         self._write_byte_data(self._MODE1, old_mode)
         time.sleep(0.005)
         self._write_byte_data(self._MODE1, old_mode | 0x80)
+
+    def sleepTest(self):
+        self._write_byte_data(self._ALL_LED_ON_L, 0x0)
+        time.sleep(1)
 
     def write(self, channel, on, off):
         """Set on and off value on specific channel"""
@@ -255,5 +312,3 @@ class PWM(object):
 
         if self._DEBUG:
             print(self._DEBUG_INFO, "Set debug on")
-        else:
-            print(self._DEBUG_INFO, "Set debug off")

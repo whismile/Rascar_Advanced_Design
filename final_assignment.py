@@ -9,6 +9,7 @@
 from car import Car
 import RPi.GPIO as GPIO
 from batting_servo import Bat
+from colour_detector import Colour_Detector as rgbSensor
 import time
 
 
@@ -32,8 +33,10 @@ class myCar(object):
 
     def __init__(self, car_name):
         self.car = Car(car_name)
+        self.rgb = rgbSensor()
         self.bat = Bat()
         self.bat.batting(180)
+        time.sleep(1)
 
         self.buzzer_pin = 8
         GPIO.setmode(GPIO.BOARD)
@@ -59,13 +62,15 @@ class myCar(object):
             #check obstacle & avoid obstacle
             distance = self.car.distance_detector.get_distance()
             line = self.car.line_detector.read_digital()
-            print(line)
+            #print(line)
             
             if 0 <= distance < self.interval:
                 if before_distance - distance > 10 or distance == -1:
                     continue
                 
                 else:
+                    count += 1
+
                     # stop
                     self.car.accelerator.stop()
                     
@@ -75,49 +80,70 @@ class myCar(object):
                     self.buzzer.stop()
 
                     # stroke & ready
-                    self.bat.batting(180)
-                    time.sleep(1)
                     self.bat.batting(-150)
+                    time.sleep(1)
+                    self.bat.batting(180)
                     time.sleep(1)
                     
                     # finish event
                     
             else:
-                if line == [0, 0, 0, 0, 0]:
+                if self.rgb.is_red():
+                    self.car.accelerator.stop()
+                    time.sleep(2.5)
+                    self.car.accelerator.go_forward(myCar.FAST)
+                    time.sleep(0.5)
+
+                elif self.rgb.is_yellow():
+                    self.car.accelerator.go_forward(myCar.SLOWER)
+
+                elif line == [0, 0, 0, 0, 0]:
+                    #self.car.steering.turn(130)
+                    #self.car.accelerator.go_backward(myCar.FAST)
+                    #while self.car.line_detector.read_digital()[1] != 0:
+                        #continue
+
+                    #time.sleep(0.2)
                     self.car.steering.turn(130)
                     self.car.accelerator.go_backward(myCar.FAST)
-                    while self.car.line_detector.read_digital()[1] != 0:
-                        continue
-                    time.sleep(0.33)
                     
                 elif line == [0, 0, 1, 0, 0]:
+                    self.car.accelerator.go_forward(myCar.FAST)
                     self.car.steering.turn(90)
                     
                 elif line == [0, 1, 1, 0, 0]:
+                    self.car.accelerator.go_forward(myCar.FAST)
                     self.car.steering.turn(80)
                     
                 elif line == [0, 1, 0, 0, 0]:
-                    self.car.steering.turn(65)
+                    self.car.accelerator.go_forward(myCar.FAST)
+                    self.car.steering.turn(75)
                     
                 elif line == [0, 0, 1, 1, 0]:
+                    self.car.accelerator.go_forward(myCar.FAST)
                     self.car.steering.turn(100)
                     
                 elif line == [0, 0, 0, 1, 0]:
+                    self.car.accelerator.go_forward(myCar.FAST)
                     self.car.steering.turn(105)
                     
                 elif line == [1, 1, 0, 0, 0]:
+                    self.car.accelerator.go_forward(myCar.FAST)
                     self.car.steering.turn(70)
                     
                 elif line == [1, 0, 0, 0, 0]:
-                    self.car.steering.turn(60)
+                    self.car.accelerator.go_forward(myCar.FAST)
+                    self.car.steering.turn(65)
                     
                 elif line == [0, 0, 0, 1, 1]:
+                    self.car.accelerator.go_forward(myCar.FAST)
                     self.car.steering.turn(110)
                     
                 elif line == [0, 0, 0, 0, 1]:
+                    self.car.accelerator.go_forward(myCar.FAST)
                     self.car.steering.turn(120)
                 
-                self.car.accelerator.go_forward(myCar.FAST)
+                #self.car.accelerator.go_forward(myCar.FAST)
             before_distance = distance
         self.car.accelerator.stop()
 

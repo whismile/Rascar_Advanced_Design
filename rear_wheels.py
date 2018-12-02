@@ -2,8 +2,11 @@ from L298N import L298N
 from PCA9685 import PCA9685
 import filedb
 
+
 class Rear_Wheels(object):
     """ Back wheels control class """
+
+    """ Initialize motor pin """
     Motor_IN1 = 11
     Motor_IN2 = 12
     Motor_IN3 = 13
@@ -15,11 +18,10 @@ class Rear_Wheels(object):
     _DEBUG = False
     _DEBUG_INFO = 'DEBUG "rear_wheels.py":'
 
-    def __init__(self, debug=False, bus_number=1, db="config"):
+    def __init__(self, bus_number=1, db="config"):
         """ Init the direction channel and pwm channel """
 
         self.db = filedb.fileDB(db=db)
-        print("loaded db")
 
         self.forward_A = int(self.db.get("forward_A", default_value=1))
         self.forward_B = int(self.db.get("forward_B", default_value=0))
@@ -29,8 +31,7 @@ class Rear_Wheels(object):
 
         # PWM Setup
         self.pwm = PCA9685.PWM(bus_number=bus_number)
-        self.pwm.frequency = 60
-    
+
         def _set_a_pwm(value):
             pulse_wide = self.pwm.map(value, 0, 100, 0, 4095)
             self.pwm.write(self.PWM_A, 0, int(pulse_wide))
@@ -44,24 +45,10 @@ class Rear_Wheels(object):
 
         self._speed = 0
 
-        self.debug = self.debug
+        self.debug = int(self.db.get("debug", default_value=0))
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Set left wheel to IN1 #%d, IN2 #%d PWM channel to %d' % (self.Motor_IN1, self.Motor_IN2, self.PWM_A))
             print(self._DEBUG_INFO, 'Set right wheel to IN3 #%d, IN4 #%d PWM channel to %d' % (self.Motor_IN3, self.Motor_IN3, self.PWM_B))
-
-    def forward(self):
-        """ Move both wheels forward """
-        self.left_wheel.forward()
-        self.right_wheel.forward()
-        if self._DEBUG:
-            print(self._DEBUG_INFO, 'Running forward')
-
-    def backward(self):
-        """ Move both wheels backward """
-        self.left_wheel.backward()
-        self.right_wheel.backward()
-        if self._DEBUG:
-            print(self._DEBUG_INFO, 'Running backward')
 
     def stop(self):
         """ Stop both wheels """
@@ -77,7 +64,7 @@ class Rear_Wheels(object):
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Down has motor power')
 
-    def forward_with_speed(self, speed_value):
+    def go_forward(self, speed_value):
         """ Move both wheels forward with speed """
         # Setup motor speed
         self._speed = speed_value
@@ -88,7 +75,7 @@ class Rear_Wheels(object):
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Running forward with speed')
 
-    def backward_with_speed(self, speed_value):
+    def go_backward(self, speed_value):
         """ Move both wheels backward with speed """
         # Setup motor speed
         self._speed = speed_value
@@ -130,7 +117,6 @@ class Rear_Wheels(object):
             self.right_wheel.debug = True
             self.pwm.debug = True
         else:
-            print(self._DEBUG_INFO, "Set debug off")
             self.left_wheel.debug = False
             self.right_wheel.debug = False
             self.pwm.debug = False
@@ -147,27 +133,28 @@ class Rear_Wheels(object):
         """ Get the front wheels to the calibration position. """
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Turn to "Calibration" position')
-        self.speed = 50
-        self.forward()
+        self.go_forward(50)
         self.cali_forward_A = self.forward_A
         self.cali_forward_B = self.forward_B
 
     def cali_left(self):
         """ Reverse the left wheels forward direction in calibration """
-        self.cali_forward_A = (1 + self.cali_forward_A) & 1
+        self.cali_forward_A = not self.cali_forward_A
         self.left_wheel.offset = self.cali_forward_A
-        self.forward()
+        self.go_forward(50)
 
     def cali_right(self):
         """ Reverse the right wheels forward direction in calibration """
-        self.cali_forward_B = (1 + self.cali_forward_B) & 1
+        self.cali_forward_B = not self.cali_forward_B
         self.right_wheel.offset = self.cali_forward_B
-        self.forward()
+        self.go_forward(50)
 
-    def cali_ok(self):
-        """ Save the calibration value """
-        self.forward_A = self.cali_forward_A
-        self.forward_B = self.cali_forward_B
-        self.db.set('forward_A', self.forward_A)
-        self.db.set('forward_B', self.forward_B)
-        self.stop()
+    @property
+    def _get_cali_forward_A(self):
+        """ Return forward_A variables """
+        return self.cali_forward_A
+
+    @property
+    def _get_cali_forward_B(self):
+        """ Return forward_B variables """
+        return self.cali_forward_B

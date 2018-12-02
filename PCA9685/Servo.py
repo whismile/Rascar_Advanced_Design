@@ -15,8 +15,6 @@ class Servo(object):
         """ Init a servo on specific channel, this offset """
         if channel < 0 or channel > 16:
             raise ValueError("Servo channel \"{0}\" is not in (0, 15).".format(channel))
-        if self._DEBUG:
-            print(self._DEBUG_INFO, "Debug on")
         self.channel = channel
         self.offset = offset
         self.lock = lock
@@ -27,9 +25,6 @@ class Servo(object):
 
     def setup(self):
         self.pwm.setup()
-
-    def reset(self):
-        self.pwm.write_reset()
 
     def _angle_to_analog(self, angle):
         """ Calculate 12-bit analog value from giving angle """
@@ -89,5 +84,3 @@ class Servo(object):
 
         if self._DEBUG:
             print(self._DEBUG_INFO, "Set debug on")
-        else:
-            print(self._DEBUG_INFO, "Set debug off")

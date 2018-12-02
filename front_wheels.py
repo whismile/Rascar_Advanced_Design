@@ -10,7 +10,7 @@ class Front_Wheels(object):
     _DEBUG = False
     _DEBUG_INFO = 'DEBUG "front_wheels.py":'
 
-    def __init__(self, debug=False, db="config", bus_number=1, channel=FRONT_WHEEL_CHANNEL):
+    def __init__(self, db="config", bus_number=1, channel=FRONT_WHEEL_CHANNEL):
         """ setup channels and basic stuff """
         self.db = filedb.fileDB(db=db)
         self._channel = channel
@@ -19,34 +19,45 @@ class Front_Wheels(object):
         self._turning_offset = int(self.db.get('turning_offset', default_value=0))
 
         self.wheel = Servo.Servo(self._channel, bus_number=bus_number, offset=self.turning_offset)
-        self.wheel.setup()
-        self.debug = debug
+        self.debug = int(self.db.get("debug", default_value=0))
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Front wheel PWM channel:', self._channel)
             print(self._DEBUG_INFO, 'Front wheel offset value:', self.turning_offset)
 
         self._angle = {"left": self._min_angle, "straight": self._straight_angle, "right": self._max_angle}
         if self._DEBUG:
-            print(self._DEBUG_INFO, 'left angle: %s, straight angle: %s, right angle: %s' % (
-            self._angle["left"], self._angle["straight"], self._angle["right"]))
+            print(self._DEBUG_INFO, 'left angle: {}, straight angle: {}, right angle: {}'
+                  .format(self._angle["left"], self._angle["straight"], self._angle["right"]))
 
-    def turn_left(self, angle = 0):
+    def turn_left(self, angle):
         """ Turn the front wheels left """
+        """ Available angle : 0 ~ 89 degrees """
         if self._DEBUG:
             print(self._DEBUG_INFO, "Turn left")
-        self.wheel.write(self._angle["left"] + angle)
+        if 0 <= angle < 90: # max angle
+            if angle < self._angle["left"]:
+                angle = self._angle["left"]
+            self.wheel.write(angle)
+        else:
+            print('[ERROR-400] You have exceeded the turn angle range to the left : {}'.format(angle))
 
-    def turn_straight(self):
+    def center_alignment(self):
         """ Turn the front wheels back straight """
         if self._DEBUG:
             print(self._DEBUG_INFO, "Turn straight")
         self.wheel.write(self._angle["straight"])
 
-    def turn_right(self, angle = 0):
+    def turn_right(self, angle):
         """ Turn the front wheels right """
+        """ Available angle : 91 ~ 179 degrees """
         if self._DEBUG:
             print(self._DEBUG_INFO, "Turn right")
-        self.wheel.write(self._angle["right"] + angle)
+        if 90 < angle < 180: # max angle
+            if angle > self._angle["right"]:
+                angle = self._angle["right"]
+            self.wheel.write(angle)
+        else:
+            print('[ERROR-400] You have exceeded the turn angle range to the right : {}'.format(angle))
 
     def turn(self, angle):
         """ Turn the front wheels to the giving angle """
@@ -88,7 +99,7 @@ class Front_Wheels(object):
         self._turning_offset = value
         self.db.set('turning_offset', value)
         self.wheel.offset = value
-        self.turn_straight()
+        self.center_alignment()
 
     @property
     def debug(self):
@@ -107,8 +118,6 @@ class Front_Wheels(object):
             print(self._DEBUG_INFO, "Set wheel debug on")
             self.wheel.debug = True
         else:
-            print(self._DEBUG_INFO, "Set debug off")
-            print(self._DEBUG_INFO, "Set wheel debug off")
             self.wheel.debug = False
 
     def ready(self):
@@ -116,44 +125,38 @@ class Front_Wheels(object):
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Turn to "Ready" position')
         self.wheel.offset = self.turning_offset
-        self.turn_straight()
-
-    def pwm_reset(self):
-        """ Resetting the PCA9685 module """
-        if self._DEBUG:
-            print(self._DEBUG_INFO, 'TEST')
-        self.wheel.reset()
+        self.center_alignment()
 
     def calibration(self):
         """ Get the front wheels to the calibration position. """
         if self._DEBUG:
             print(self._DEBUG_INFO, 'Turn to "Calibration" position')
-        self.turn_straight()
+        self.center_alignment()
         self.cali_turning_offset = self.turning_offset
 
     def cali_left(self):
         """ Calibrate the wheels to left """
         self.cali_turning_offset -= 10
         self.wheel.offset = self.cali_turning_offset
-        self.turn_straight()
+        self.center_alignment()
 
     def cali_right(self):
         """ Calibrate the wheels to right """
         self.cali_turning_offset += 10
         self.wheel.offset = self.cali_turning_offset
-        self.turn_straight()
+        self.center_alignment()
         
     def cali_accurate_left(self):
         """ Accurate Calibrate the wheels to left """
         self.cali_turning_offset -= 1
         self.wheel.offset = self.cali_turning_offset
-        self.turn_straight()
+        self.center_alignment()
 
     def cali_accurate_right(self):
         """ Accurate Calibrate the wheels to right """
         self.cali_turning_offset += 1
         self.wheel.offset = self.cali_turning_offset
-        self.turn_straight()
+        self.center_alignment()
 
     def return_cali_offset(self):
         """ Return the calibration value """
