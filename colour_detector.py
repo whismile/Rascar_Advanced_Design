@@ -68,7 +68,7 @@ if __name__ == "__main__":
             elif cd.is_green():
                 print('green')
             else:
-                print('fuck')
+                print('None')
 
             sleep(1)
     except KeyboardInterrupt:
