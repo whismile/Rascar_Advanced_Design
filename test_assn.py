@@ -59,7 +59,6 @@ class myCar(object):
             # check obstacle & avoid obstacle
             distance = self.car.distance_detector.get_distance()
             line = self.car.line_detector.read_digital()
-            print(line)
 
             if 0 <= distance < self.interval:
                 if before_distance - distance > 10 or distance == -1:
@@ -125,8 +124,6 @@ class myCar(object):
                 else:
                     self.car.steering.turn(90)
                     self.car.accelerator.go_forward(myCar.FAST)
-
-                self.car.accelerator.go_forward(myCar.FAST)
             before_distance = distance
         self.car.accelerator.stop()
 

@@ -10,7 +10,7 @@ class Colour_Detector(object):
         self.red_range = [[100, 255], [0, 155], [0, 155]]   # Range of Colours
         self.green_range = [[0, 155], [100, 255], [0, 155]]
         self.blue_range = [[0, 155], [0, 155], [100, 255]]
-        self.yellow_range = [[100, 255], [100, 255], [0, 155]]
+        self.yellow_range = [[100, 255], [100, 255], [0, 200]]
 
     # Comparing Conditions and Return Boolean
     def is_red(self):
@@ -26,7 +26,7 @@ class Colour_Detector(object):
                and self.yellow_range[2][0] <= self.get_blue() <= self.yellow_range[2][1]
 
     def is_green(self):
-        return self.get_green() > self.get_blue() + 50 and self.get_green() > self.get_blue() + 50 \
+        return self.get_green() > self.get_blue() + 50 and self.get_green() > self.get_red() + 50 \
                and self.green_range[0][0] <= self.get_red() <= self.green_range[0][1] \
                and self.green_range[1][0] <= self.get_green() <= self.green_range[1][1] \
                and self.green_range[2][0] <= self.get_blue() <= self.green_range[2][1]
